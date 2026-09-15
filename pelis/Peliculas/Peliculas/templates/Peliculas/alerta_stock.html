@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas de Stock - Taller Mecánico</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>⚙️ Taller<span>Panel</span></h2>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'catalogo' %}">📦 Inventario</a></li>
+                    <li><a href="{% url 'ingresar_pelicula' %}">📥 Ingresar Repuesto</a></li>
+                    <li><a href="{% url 'alertas_stock' %}" class="active">⚠️ Alertas Stock</a></li>
+                    <li><a href="{% url 'distribuidoras' %}">👥 Proveedores</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Filtro de Stock Crítico</h1>
+            </header>
+
+            <div class="inventory-container" style="flex-direction: column;">
+                <div class="table-section" style="width: 100%;">
+                    <h2>⚠️ Repuestos Agotados o Sin Stock</h2>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Producto / Repuesto</th>
+                                <th>Categoría</th>
+                                <th>Stock Actual</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpo-alertas">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cuerpoAlertas = document.getElementById('cuerpo-alertas');
+            const inventario = JSON.parse(localStorage.getItem('inventario_taller')) || [];
+            
+            // Filtrar solo los productos críticos
+            const productosCriticos = inventario.filter(repuesto => {
+                const cantidad = Number(repuesto.cantidad) || 0;
+                const estado = repuesto.estado || 'disponible';
+                return estado === 'agotado' || cantidad === 0;
+            });
+
+            // Si está todo en orden y no hay faltantes
+            if (productosCriticos.length === 0) {
+                cuerpoAlertas.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #27ae60; padding: 30px; font-weight: bold;">
+                            ✅ ¡Todo al día! No hay repuestos en stock crítico actualmente.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            // Dibujar solo los repuestos críticos en la tabla
+            productosCriticos.forEach(function(repuesto) {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><strong>${repuesto.codigo}</strong></td>
+                    <td>${repuesto.nombre}</td>
+                    <td>${repuesto.categoria}</td>
+                    <td style="color: #e74c3c; font-weight: bold;">${repuesto.cantidad} unidades</td>
+                    <td><span class="status out">Agotado</span></td>
+                `;
+                cuerpoAlertas.appendChild(fila);
+            });
+        });
+    </script>
+</body>
+</html>

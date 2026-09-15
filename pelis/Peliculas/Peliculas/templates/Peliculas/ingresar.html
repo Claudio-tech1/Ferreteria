@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entradas y Salidas - Taller Mecánico</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- Barra lateral de navegación -->
+        <aside class="sidebar">
+            <h2>⚙️ Taller<span>Panel</span></h2>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'catalogo' %}">📦 Inventario</a></li>
+                    <li><a href="{% url 'ingresar_pelicula' %}" class="active">📥 Ingresar Repuesto</a></li>
+                    <li><a href="{% url 'alertas_stock' %}">⚠️ Alertas Stock</a></li>
+                    <li><a href="{% url 'distribuidoras' %}">👥 Proveedores</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Movimientos de Stock</h1>
+            </header>
+
+            <div class="inventory-container">
+                
+                <div class="form-section">
+                    <h2>Ingresar Repuesto</h2>
+                    <form action="#" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="codigo">Código de Barra / Ref</label>
+                            <input type="text" id="codigo" required placeholder="Ej: #REF-005">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nombre">Nombre del Producto</label>
+                            <input type="text" id="nombre" required placeholder="Ej: Amortiguador trasero">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="categoria">Categoría</label>
+                            <select id="categoria">
+                                <option value="motor">Motor</option>
+                                <option value="frenos">Frenos</option>
+                                <option value="lubricantes">Lubricantes</option>
+                                <option value="suspension">Suspensión</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group row">
+                            <div>
+                                <label for="cantidad">Cantidad</label>
+                                <input type="number" id="cantidad" min="1" required placeholder="10">
+                            </div>
+                            <div>
+                                <label for="precio">Precio ($)</label>
+                                <input type="number" id="precio" min="0" required placeholder="15000">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-add">Agregar al Inventario</button>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+<script>
+        document.querySelector('.form-section form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Evita que la página se recargue
+
+            // 1. Capturar los valores del formulario
+            const codigo = document.getElementById('codigo').value;
+            const nombre = document.getElementById('nombre').value;
+            const categoria = document.getElementById('categoria').value;
+            const cantidad = document.getElementById('cantidad').value;
+            const precio = document.getElementById('precio').value;
+
+            // 2. Crear el objeto del nuevo repuesto
+            const nuevoRepuesto = {
+                codigo: codigo,
+                nombre: nombre,
+                categoria: categoria,
+                cantidad: cantidad,
+                precio: precio
+            };
+
+            // 3. Obtener el inventario existente de LocalStorage (si no hay, crea una lista vacía)
+            let inventario = JSON.parse(localStorage.getItem('inventario_taller')) || [];
+
+            // 4. Agregar el nuevo repuesto a la lista
+            inventario.push(nuevoRepuesto);
+
+            // 5. Guardar la lista actualizada en LocalStorage
+            localStorage.setItem('inventario_taller', JSON.stringify(inventario));
+
+            // 6. Alerta de éxito y limpiar formulario
+            alert('¡Repuesto registrado con éxito en LocalStorage!');
+            this.reset();
+        });
+    </script>
+</body>
+</html>

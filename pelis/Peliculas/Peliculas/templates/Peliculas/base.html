@@ -1,0 +1,263 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Inventario - Taller Mecánico</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- Barra lateral de navegación -->
+        <aside class="sidebar">
+            <h2>⚙️ Taller<span>Panel</span></h2>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'catalogo' %}" class="active">📦 Inventario</a></li>
+                    <li><a href="{% url 'ingresar_pelicula' %}">📥 Ingresar Repuesto</a></li>
+                    <li><a href="{% url 'alertas_stock' %}">⚠️ Alertas Stock</a></li>
+                    <li><a href="{% url 'distribuidoras' %}">👥 Proveedores</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Control de Inventario</h1>
+            </header>
+
+            <!-- Tarjetas de Resumen (Widgets) -->
+            <section class="widgets-grid">
+                <div class="card-widget">
+                    <h3>Total Productos</h3>
+                    <p class="number" id="widget-total">0</p>
+                </div>
+                <div class="card-widget alert">
+                    <h3>Stock Crítico ⚠️</h3>
+                    <p class="number" id="widget-critico">0</p>
+                </div>
+                <div class="card-widget">
+                    <h3>Categorías</h3>
+                    <p class="number" id="widget-categorias">0</p>
+                </div>
+            </section>
+
+            <!-- Sección de tabla -->
+            <div class="inventory-container" style="flex-direction: column; gap: 15px;">
+                
+                <div class="table-section" style="width: 100%;">
+                    <h2>Productos en Existencia</h2>
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th class="col-seleccion" style="display: none; width: 40px;">Sel.</th>
+                                <th>Código</th>
+                                <th>Producto / Repuesto</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Precio Unit.</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpo-tabla">
+                            
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="acciones-inventario" style="display: flex; gap: 10px; padding-left: 5px;">
+                    <button id="btn-modo-eliminar" class="btn-eliminar-varios">🗑️ Eliminar Varios</button>
+                    
+                    <button id="btn-confirmar-eliminar" class="btn-confirmar" style="display: none;">✔️ Confirmar Selección</button>
+                    <button id="btn-cancelar-eliminar" class="btn-cancelar" style="display: none;">❌ Cancelar</button>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cuerpoTabla = document.getElementById('cuerpo-tabla');
+            const btnModoEliminar = document.getElementById('btn-modo-eliminar');
+            const btnConfirmar = document.getElementById('btn-confirmar-eliminar');
+            const btnCancelar = document.getElementById('btn-cancelar-eliminar');
+            
+            // Elementos de los cuadros superiores (Widgets)
+            const widgetTotal = document.getElementById('widget-total');
+            const widgetCritico = document.getElementById('widget-critico');
+            const widgetCategorias = document.getElementById('widget-categorias');
+            
+            let modoEliminarActivo = false;
+
+            // 1. Sincroniza y calcula de forma exacta los cuadros informativos superiores
+            function actualizarWidgets() {
+                const inventario = JSON.parse(localStorage.getItem('inventario_taller')) || [];
+                
+                let totalUnidades = 0;
+                let totalCritico = 0;
+                const categoriasUnicas = new Set(); // Set no permite categorías repetidas
+
+                // Recorremos estrictamente el inventario real del LocalStorage
+                inventario.forEach(function(repuesto) {
+                    const cantidad = Number(repuesto.cantidad) || 0;
+                    totalUnidades += cantidad;
+
+                    // Alerta crítica: si el usuario lo marca "Agotado" o si el stock llegó a 0
+                    const estadoActual = repuesto.estado || 'disponible';
+                    if (estadoActual === 'agotado' || cantidad === 0) {
+                        totalCritico++;
+                    }
+
+                    // Registramos la categoría de forma limpia
+                    if (repuesto.categoria) {
+                        categoriasUnicas.add(repuesto.categoria.trim().toLowerCase());
+                    }
+                });
+
+                // Renderizamos las estadísticas con formato regional chileno
+                widgetTotal.textContent = totalUnidades.toLocaleString('es-CL');
+                widgetCritico.textContent = totalCritico;
+                widgetCategorias.textContent = categoriasUnicas.size;
+            }
+
+            // 2. Dibuja las filas de la tabla leyendo el LocalStorage
+            function cargarInventario() {
+                // Limpiamos las filas dinámicas anteriores para evitar duplicados en el HTML
+                const filasViejas = cuerpoTabla.querySelectorAll('.fila-dinamica');
+                filasViejas.forEach(fila => fila.remove());
+
+                const inventario = JSON.parse(localStorage.getItem('inventario_taller')) || [];
+
+                // Si no hay productos guardados, podemos mostrar un mensaje amigable en la tabla
+                if (inventario.length === 0) {
+                    cuerpoTabla.innerHTML = `<tr class="fila-dinamica"><td colspan="7" style="text-align: center; color: #718096; padding: 20px;">No hay productos en el inventario. Agrega uno en "Entradas / Salidas".</td></tr>`;
+                    actualizarWidgets();
+                    return;
+                }
+
+                inventario.forEach(function(repuesto, index) {
+                    const nuevaFila = document.createElement('tr');
+                    nuevaFila.classList.add('fila-dinamica');
+
+                    const precioFormateado = '$' + Number(repuesto.precio).toLocaleString('es-CL');
+                    const estadoActual = repuesto.estado || 'disponible';
+                    const claseEstado = estadoActual === 'disponible' ? 'status ok' : 'status out';
+
+                    nuevaFila.innerHTML = `
+                        <td class="col-seleccion" style="${modoEliminarActivo ? '' : 'display: none;'} text-align: center;">
+                            <input type="checkbox" class="chk-repuesto" data-index="${index}" style="transform: scale(1.2); cursor: pointer;">
+                        </td>
+                        <td><strong>${repuesto.codigo}</strong></td>
+                        <td>${repuesto.nombre}</td>
+                        <td>${repuesto.categoria}</td>
+                        <td>${repuesto.cantidad} unidades</td>
+                        <td>${precioFormateado}</td>
+                        <td>
+                            <select class="select-estado ${claseEstado}" data-index="${index}">
+                                <option value="disponible" ${estadoActual === 'disponible' ? 'selected' : ''}>Disponible</option>
+                                <option value="agotado" ${estadoActual === 'agotado' ? 'selected' : ''}>Agotado</option>
+                            </select>
+                        </td>
+                    `;
+
+                    cuerpoTabla.appendChild(nuevaFila);
+                });
+
+                // Asignamos el evento 'change' a las pastillas de Estado creadas
+                document.querySelectorAll('.select-estado').forEach(select => {
+                    select.addEventListener('change', function() {
+                        const index = this.getAttribute('data-index');
+                        const nuevoEstado = this.value;
+                        actualizarEstadoEnStorage(index, nuevoEstado, this);
+                    });
+                });
+
+                // Ejecutamos la actualización de widgets al terminar de armar la tabla
+                actualizarWidgets();
+            }
+
+            // 3. Guarda los cambios de Estado (Disponible/Agotado) en tiempo real
+            function actualizarEstadoEnStorage(index, nuevoEstado, selectElement) {
+                let inventario = JSON.parse(localStorage.getItem('inventario_taller')) || [];
+                
+                inventario[index].estado = nuevoEstado;
+                localStorage.setItem('inventario_taller', JSON.stringify(inventario));
+
+                // Aplicar estilos visuales al instante sin recargar la página entera
+                if (nuevoEstado === 'disponible') {
+                    selectElement.className = 'select-estado status ok';
+                } else {
+                    selectElement.className = 'select-estado status out';
+                }
+
+                // Sincronizar widgets (por si cambió el stock crítico)
+                actualizarWidgets();
+            }
+
+            // 4. Activar Modo de Selección Múltiple (Muestra cuadritos)
+            btnModoEliminar.addEventListener('click', function() {
+                modoEliminarActivo = true;
+                document.querySelectorAll('.col-seleccion').forEach(el => el.style.display = '');
+                
+                btnModoEliminar.style.display = 'none';
+                btnConfirmar.style.display = 'inline-block';
+                btnCancelar.style.display = 'inline-block';
+            });
+
+            // 5. Cancelar Modo de Selección Múltiple (Oculta cuadritos y limpia marcas)
+            btnCancelar.addEventListener('click', function() {
+                modoEliminarActivo = false;
+                document.querySelectorAll('.col-seleccion').forEach(el => el.style.display = 'none');
+                
+                btnModoEliminar.style.display = 'inline-block';
+                btnConfirmar.style.display = 'none';
+                btnCancelar.style.display = 'none';
+                
+                document.querySelectorAll('.chk-repuesto').forEach(chk => chk.checked = false);
+            });
+
+            // 6. Eliminar en masa los repuestos seleccionados
+            btnConfirmar.addEventListener('click', function() {
+                const checkboxes = document.querySelectorAll('.chk-repuesto:checked');
+                
+                if (checkboxes.length === 0) {
+                    alert('No has seleccionado ningún repuesto para eliminar.');
+                    return;
+                }
+
+                if (confirm(`¿Estás seguro de que deseas eliminar los ${checkboxes.length} repuestos seleccionados?`)) {
+                    let inventario = JSON.parse(localStorage.getItem('inventario_taller')) || [];
+                    let indicesABorrar = [];
+                    
+                    // Almacenamos las posiciones de los elementos marcados
+                    checkboxes.forEach(chk => {
+                        indicesABorrar.push(Number(chk.getAttribute('data-index')));
+                    });
+                    
+                    // Ordenamos de mayor a menor para no romper el orden de los índices en el splice
+                    indicesABorrar.sort((a, b) => b - a);
+
+                    // Borramos los elementos del array de almacenamiento
+                    indicesABorrar.forEach(index => {
+                        inventario.splice(index, 1);
+                    });
+
+                    // Guardamos la base de datos limpia de vuelta
+                    localStorage.setItem('inventario_taller', JSON.stringify(inventario));
+                    
+                    // Salimos del modo borrar y volvemos a renderizar todo limpio
+                    btnCancelar.click(); 
+                    cargarInventario(); 
+                }
+            });
+
+            // Inicialización del sistema al cargar el archivo
+            cargarInventario();
+        });
+    </script>
+</body>
+</html>

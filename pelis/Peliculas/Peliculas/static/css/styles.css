@@ -1,0 +1,292 @@
+/* Reseteo y Base */
+* {
+    color: cornsilk;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+:root {
+    --bg-oscuro: rgba(30, 34, 43, 0.75); /* Pasa de #ffffff a gris oscuro transparente */
+    --bg-gris-claro: #faf5f5;
+    --texto-oscuro: #ffffff;             /* Cambiado a blanco para que se lea bien sobre fondo transparente */
+    --texto-blanco: #ffffff;
+    --naranja-taller: #ff5722;
+    --rojo-alerta: #e74c3c;
+    --amarillo-alerta: #f1c40f;
+    --verde-ok: #2ecc71;
+}
+
+body {
+        display: flex;
+        flex-direction: column;
+        background-image:
+          linear-gradient(rgba(30, 34, 43, 0.5), rgba(30, 34, 43, 0.5)),
+          url("https://files.hodoor.world/main/5c0001be-55a3-4dc9-a775-a1f462e444f0.png");
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        background-attachment: fixed;
+
+        height: 100vh;
+        overflow: hidden;
+      }
+
+/* Layout del Dashboard */
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Barra Lateral (Sidebar) */
+.sidebar {
+    width: 260px;
+    background-color: var(--bg-lateral);
+    color: var(--texto-blanco);
+    padding: 20px;
+}
+
+.sidebar h2 {
+    margin-bottom: 40px;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+}
+
+.sidebar h2 span {
+    color: var(--naranja-taller);
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar ul li a {
+    color: #a0aec0;
+    text-decoration: none;
+    display: block;
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.sidebar ul li a:hover, .sidebar ul li a.active {
+    background-color: var(--naranja-taller);
+    color: var(--texto-blanco);
+}
+
+/* Contenido Principal */
+.main-content {
+    flex: 1;
+    padding: 30px;
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.user-profile {
+    background: var(--bg-oscuro);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* Tarjetas de Indicadores (Widgets) */
+.widgets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.card-widget {
+    background: transparent;
+    backdrop-filter: blur(8px);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    border-left: 5px solid var(--naranja-taller);
+}
+
+.card-widget.alert {
+    border-left-color: var(--rojo-alerta);
+    background-color: transparent;
+    backdrop-filter: blur(8px);
+}
+
+.card-widget h3 {
+    font-size: 0.9rem;
+    color: #718096;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.card-widget .number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* Contenedor de Tabla y Formulario */
+.inventory-container {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.table-section {
+    flex: 2;
+    min-width: 500px;
+    background: transparent;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    backdrop-filter: blur(8px);
+}
+
+.form-section {
+    flex: 1;
+    min-width: 300px;
+    background: var(--bg-oscuro);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Estilos de Tabla */
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.inventory-table th, .inventory-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.inventory-table th {
+    background-color: transparent;
+    color: #64748b;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+/* Estados en la tabla */
+.status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.status.ok { background: #e8f5e9; color: var(--verde-ok); }
+.status.low { background: #fffde7; color: #b78103; }
+.status.out { background: #ffebee; color: var(--rojo-alerta); }
+
+/* Estilos de Formulario */
+.form-section h2, .table-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group.row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-group.row div {
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    background-color: #334155;
+    color: white;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--naranja-taller);
+}
+
+.btn-add {
+    width: 100%;
+    background-color: var(--naranja-taller);
+    color: cornsilk;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 10px;
+}
+
+.btn-add:hover {
+    background-color: #e64a19;
+}
+
+button, 
+input[type="button"] {
+    background-color: var(--rojo-alerta) !important;
+    color: cornsilk !important;
+    
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    
+    padding: 8px 16px !important;
+    border-radius: 4px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
+    margin-top: 15px !important;
+    
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+button:hover {
+    background-color: #c0392b !important;
+}
+
+/* ESCUDO DE PROTECCIÓN PARA LOS BOTONES INTERNOS DE LA TABLA */
+.inventory-table button,
+.inventory-table td button,
+#cuerpo-proveedores button,
+.btn-editar-prov,
+.btn-eliminar-prov {
+    background-color: revert !important;
+    color: revert !important;
+    border: revert !important;
+    padding: revert !important;
+    margin-top: 0 !important;
+    border-radius: revert !important;
+    font-size: revert !important;
+}
